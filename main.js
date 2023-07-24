@@ -27,7 +27,6 @@ let board = [
 ]*/
 
 //standard board setup
-
 let board = [
     [0, 1, 0, 1, 0, 1, 0, 1],
     [1, 0, 1, 0, 1, 0, 1, 0],
@@ -73,8 +72,31 @@ let board = [
     [0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0],
     [11, 0, 0, 0, 0, 0, 0, 0]
-]
-*/
+]*/
+
+/*
+let board = [
+    [0, 0, 0, 0, 0, 0, 0, 12],
+    [0, 0, 2, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 2, 0, 0, 0, 0, 0],
+    [0, 2, 0, 11, 0, 0, 0, 0],
+    [11, 0, 11, 0, 0, 0, 0, 0]
+]*/
+/*
+//check player win
+let board = [
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 1, 0, 0, 0],
+    [0, 0, 0, 2, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0]
+]*/
 
 /*
 //bitmask to stop pieces to stop pieces from leaving top of board(and check for promotion)
@@ -100,13 +122,32 @@ let row6 = BigInt.asUintN(64, 0b00000000_11111111_00000000_00000000_00000000_000
 let row7 = BigInt.asUintN(64, 0b11111111_00000000_00000000_00000000_00000000_00000000_00000000_00000000n)
 
 let playerTurn = true
-let depth = 7
+let depth = 11
 let playerPieces = document.querySelectorAll('span')
 let selectedPiece = null //last clicked piece
 let playerMoves = []
 let perms = 0
 let followupPiece = -1
 
+function changedDepth(){
+    if(document.getElementById('depth').value == 9){
+		if(depth < 9){
+			document.getElementById('roboText').innerHTML = 'I feel dumber now!'
+		}
+		else{
+			document.getElementById('roboText').innerHTML = 'I feel smarter now!'
+		}
+		depth = 9
+    }
+    else if(document.getElementById('depth').value == 7){
+        document.getElementById('roboText').innerHTML = 'I feel dumber now!'
+		depth = 7
+    }
+	else if(document.getElementById('depth').value == 11){
+        document.getElementById('roboText').innerHTML = 'I feel smarter now!'
+		depth = 11
+    }
+}
 
 function setEventListeners(){
     pieces = document.querySelectorAll('span')
@@ -246,6 +287,7 @@ function clickCell(e){
 	}
 	else{
 		console.log('Ai moving...')
+		document.getElementById('roboText').innerHTML = `Computing... Am i taking too long? Try reducing my depth`
 		setTimeout(()=>{
 			minimaxHelper()
 		}, 61)
@@ -309,13 +351,14 @@ function trailingZeros(bitboard) {
 
 function minimaxHelper(){
 	playerTurn = false
-	let bestValue = -2001
-	let depth = 9 //test depth
+	let bestValue = -200000
 	perms = 0
 	let moves = []
 	moves = genMoves(redPieces, blackPieces, redKings, blackKings, 'r')
 	if(moves.length == 0){
 		console.log('Player Won')
+		document.getElementById('roboText').innerHTML = 'Good Game! You got me! Please give me feedback on how to improve'
+		return
 	}
 	let bestRed = BigInt.asUintN(64, 0n)
 	let bestRedK = BigInt.asUintN(64, 0n)
@@ -351,7 +394,7 @@ function minimaxHelper(){
 			newRedK = newRedK ^ (BigInt.asUintN(64, 1n) << BigInt(move.source))
 			newRedK = newRedK | (BigInt.asUintN(64, 1n) << BigInt(move.destination))
 		}
-		let currVal = minimax(newRedP, newBlackP, newRedK, newBlackK, depth, -2000, 2000, false)
+		let currVal = minimax(newRedP, newBlackP, newRedK, newBlackK, depth, -200000, 200000, false)
 		if(currVal > bestValue){
 			bestValue = currVal
 			bestRed = newRedP
@@ -360,7 +403,7 @@ function minimaxHelper(){
 			bestBlackK = newBlackK
 		}
 	}
-	console.log(bestValue)
+	console.log(`Eval: ${bestValue}`)
 	//DOWN HERE UPDATE BITBOARDS AND HTML TO BE NEXT MOVE
 	redPieces = bestRed
 	redKings = bestRedK
@@ -368,7 +411,47 @@ function minimaxHelper(){
 	blackKings = bestBlackK
 	playerTurn = true
 	followupPiece = -1
-	console.log(perms)
+	console.log(`Permuatations: ${perms}`)
+	if(genMoves(blackPieces, redPieces, blackKings, redKings, 'b').length == 0){ //ai won
+		console.log('ai won')
+		document.getElementById('roboText').innerHTML = 'Good game! Feel free to play me again whenever :)'
+	}
+	else if(bestValue <= -1000){ //calculated loss for ai with best play
+        document.getElementById('roboText').innerHTML = 'I have a bad feeling about this...'
+    }
+    else if(bestValue >= 1000){ //calculated win for ai with best play
+        document.getElementById('roboText').innerHTML = 'Your loss is certain...'
+    }
+    else{
+        document.getElementById('roboText').innerHTML = `I have analyzed ${perms} positions`
+        if(Math.abs(bestValue) < 10){
+            document.getElementById('roboText').innerHTML += ` and we are evenly matched!`
+        }
+        else if(bestValue > 10){
+            document.getElementById('roboText').innerHTML += ` and I am winning!`
+        }
+        else if(bestValue > 30){
+            document.getElementById('roboText').innerHTML += ` and I am dominating!`
+        }
+		else if(bestValue > 50){
+            document.getElementById('roboText').innerHTML += ` and you are in big trouble!`
+        }
+		else if(bestValue > 100){
+            document.getElementById('roboText').innerHTML += ` and you are almost lost!`
+        }
+        else if(bestValue < -10){
+            document.getElementById('roboText').innerHTML += ` and I am losing!`
+        }
+        else if(bestValue < -30){
+            document.getElementById('roboText').innerHTML += ` and I am failing!`
+        }
+		else if(bestValue < -50){
+            document.getElementById('roboText').innerHTML += ` and its not looking good for me!`
+        }
+		else if(bestValue < -100){
+            document.getElementById('roboText').innerHTML = ` I'm short-circuiting..`
+        }
+    }
 	removeEventListeners()
 	updateHTML()
 }
@@ -381,10 +464,10 @@ function minimax(redPieces, blackPieces, redKings, blackKings, depth, alpha, bet
 	}
 	if(maximizing){
 		let moves = genMoves(redPieces, blackPieces, redKings, blackKings, 'r')
-		if(moves.length == 0){ //no moves to make
-			return -2000
+		if(moves.length == 0){ //no moves to make, multiply by depth so as to prioritize faster win
+			return -2000 * depth
 		}
-		let maxEval = -2000
+		let maxEval = -200000
 		for(let move of moves){
 			let newBlackP = blackPieces
 			let newRedP = redPieces
@@ -426,10 +509,10 @@ function minimax(redPieces, blackPieces, redKings, blackKings, depth, alpha, bet
 	}
 	else{
 		let moves = genMoves(blackPieces, redPieces, blackKings, redKings, 'b')
-		if(moves.length == 0){ //no moves to make
-			return 2000
+		if(moves.length == 0){ //no moves to make, multiply by depth so as to prioritize faster win
+			return 2000 * depth
 		}
-		let minEval = 2000
+		let minEval = 200000
 		for(let move of moves){
 			let newBlackP = blackPieces
 			let newRedP = redPieces
@@ -477,21 +560,19 @@ function genMoves(myPieces, enemyPieces, myKings, enemyKings, color){
 	let kingsCopy = myKings
 	let allPieces = myPieces | enemyPieces | myKings | enemyKings
 	let allEnemy = enemyPieces | enemyKings
-	let possibleMoves = []
 	let possibleCaptures = []
 	while(piecesCopy != BigInt(0)){
 		let source = trailingZeros(piecesCopy)
-		let possibleMoves = generatePossibleMoves(source, myKings, color, allPieces);
+		moves = moves.concat(generatePossibleMoves(source, myKings, color, allPieces));
 		generatePossibleCaptures(possibleCaptures, source, allEnemy, false, color, allPieces, [], source)
-		moves = moves.concat(possibleMoves)
 		piecesCopy = piecesCopy & (piecesCopy - BigInt.asUintN(64, 1n));
 		//console.log(piecesCopy.toString(2))
 	}
+	
 	while(kingsCopy != BigInt(0)){
 		let source = trailingZeros(kingsCopy)
-		possibleMoves = possibleMoves.concat(generatePossibleMoves(source, myKings, color, allPieces))
+		moves = moves.concat(generatePossibleMoves(source, myKings, color, allPieces))
 		generatePossibleCaptures(possibleCaptures, source, allEnemy, true, color, allPieces, [], source)
-		moves = moves.concat(possibleMoves)
 		kingsCopy = kingsCopy & (kingsCopy - BigInt.asUintN(64, 1n));
 	}
 	if(possibleCaptures.length > 0){
