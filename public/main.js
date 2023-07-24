@@ -122,7 +122,7 @@ let row6 = BigInt.asUintN(64, 0b00000000_11111111_00000000_00000000_00000000_000
 let row7 = BigInt.asUintN(64, 0b11111111_00000000_00000000_00000000_00000000_00000000_00000000_00000000n)
 
 let playerTurn = true
-let depth = 11
+let depth = 9
 let playerPieces = document.querySelectorAll('span')
 let selectedPiece = null //last clicked piece
 let playerMoves = []
