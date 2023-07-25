@@ -27,6 +27,7 @@ let board = [
 ]*/
 
 //standard board setup
+
 let board = [
     [0, 1, 0, 1, 0, 1, 0, 1],
     [1, 0, 1, 0, 1, 0, 1, 0],
@@ -96,6 +97,31 @@ let board = [
     [0, 0, 0, 0, 1, 0, 0, 0],
     [0, 0, 0, 2, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0]
+]*/
+
+/*
+//BUGGED POSITION? MOVE 51-44
+let board = [
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 12, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 11, 0, 12, 0, 0, 0, 0],
+    [11, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0]
+]*/
+/*
+//check 2v2 endgame
+let board = [
+    [0, 0, 0, 0, 0, 12, 0, 12],
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [11, 0, 11, 0, 0, 0, 0, 0]
 ]*/
 
 /*
@@ -194,7 +220,7 @@ function clickPiece(e){
 		checkPlayerJumps(source, allPieces, allEnemy, true, moves)
 	}
 	if(moves.length == 0){ //if no captures then look for normal moves
-		moves = generatePossibleMoves(source, blackKings, 'b', allPieces)
+		generatePossibleMoves(source, blackKings, 'b', allPieces, moves)
 	}
 	for(let move of moves){ //highlight moves
 		document.getElementById(`${move.destination}`).innerHTML = `<p class="available-move"></p>`
@@ -354,6 +380,7 @@ function minimaxHelper(){
 	let bestValue = -200000
 	perms = 0
 	let moves = []
+	let startTime = Date.now()
 	moves = genMoves(redPieces, blackPieces, redKings, blackKings, 'r')
 	if(moves.length == 0){
 		console.log('Player Won')
@@ -404,6 +431,7 @@ function minimaxHelper(){
 		}
 	}
 	console.log(`Eval: ${bestValue}`)
+	console.log(moves)
 	//DOWN HERE UPDATE BITBOARDS AND HTML TO BE NEXT MOVE
 	redPieces = bestRed
 	redKings = bestRedK
@@ -423,32 +451,32 @@ function minimaxHelper(){
         document.getElementById('roboText').innerHTML = 'Your loss is certain...'
     }
     else{
-        document.getElementById('roboText').innerHTML = `I have analyzed ${perms} positions`
-        if(Math.abs(bestValue) < 10){
+        document.getElementById('roboText').innerHTML = `I have analyzed ${perms} positions in ${(Date.now()-startTime)/1000}s`
+        if(Math.abs(bestValue) < 5){
             document.getElementById('roboText').innerHTML += ` and we are evenly matched!`
         }
-        else if(bestValue > 10){
+        else if(bestValue > 5){
             document.getElementById('roboText').innerHTML += ` and I am winning!`
         }
-        else if(bestValue > 30){
+        else if(bestValue > 10){
             document.getElementById('roboText').innerHTML += ` and I am dominating!`
         }
-		else if(bestValue > 50){
+		else if(bestValue > 20){
             document.getElementById('roboText').innerHTML += ` and you are in big trouble!`
         }
-		else if(bestValue > 100){
+		else if(bestValue > 50){
             document.getElementById('roboText').innerHTML += ` and you are almost lost!`
         }
-        else if(bestValue < -10){
+        else if(bestValue > -9){
             document.getElementById('roboText').innerHTML += ` and I am losing!`
         }
-        else if(bestValue < -30){
+        else if(bestValue > -10){
             document.getElementById('roboText').innerHTML += ` and I am failing!`
         }
-		else if(bestValue < -50){
+		else if(bestValue > -20){
             document.getElementById('roboText').innerHTML += ` and its not looking good for me!`
         }
-		else if(bestValue < -100){
+		else if(bestValue > -50){
             document.getElementById('roboText').innerHTML = ` I'm short-circuiting..`
         }
     }
@@ -561,20 +589,36 @@ function genMoves(myPieces, enemyPieces, myKings, enemyKings, color){
 	let allPieces = myPieces | enemyPieces | myKings | enemyKings
 	let allEnemy = enemyPieces | enemyKings
 	let possibleCaptures = []
-	while(piecesCopy != BigInt(0)){
+	while(piecesCopy != BigInt(0)){ //check captures first
 		let source = trailingZeros(piecesCopy)
-		moves = moves.concat(generatePossibleMoves(source, myKings, color, allPieces));
 		generatePossibleCaptures(possibleCaptures, source, allEnemy, false, color, allPieces, [], source)
 		piecesCopy = piecesCopy & (piecesCopy - BigInt.asUintN(64, 1n));
 		//console.log(piecesCopy.toString(2))
 	}
-	
 	while(kingsCopy != BigInt(0)){
 		let source = trailingZeros(kingsCopy)
-		moves = moves.concat(generatePossibleMoves(source, myKings, color, allPieces))
 		generatePossibleCaptures(possibleCaptures, source, allEnemy, true, color, allPieces, [], source)
 		kingsCopy = kingsCopy & (kingsCopy - BigInt.asUintN(64, 1n));
 	}
+	
+	if(possibleCaptures.length == 0){ //if no captures consider moves
+		piecesCopy = myPieces
+		while(piecesCopy != BigInt(0)){
+			let source = trailingZeros(piecesCopy)
+			generatePossibleMoves(source, myKings, color, allPieces, moves)
+			piecesCopy = piecesCopy & (piecesCopy - BigInt.asUintN(64, 1n));
+			//console.log(piecesCopy.toString(2))
+		}
+		kingsCopy = myKings
+		while(kingsCopy != BigInt(0)){
+			let source = trailingZeros(kingsCopy)
+			generatePossibleMoves(source, myKings, color, allPieces, moves)
+			kingsCopy = kingsCopy & (kingsCopy - BigInt.asUintN(64, 1n));
+		}
+	}
+	
+	
+	//console.log(possibleCaptures)
 	if(possibleCaptures.length > 0){
 		return possibleCaptures
 	}
@@ -614,8 +658,7 @@ function capInBoundary(source, destination){ //specifically checking only top an
 	return true
 }
 //returns array of possible non capture moves for given piece
-function generatePossibleMoves(source, kings, color, allPieces) {
-    let possibleMoves = [];
+function generatePossibleMoves(source, kings, color, allPieces, possibleMoves){
 	//red offsets
 	let leftMove = source - 7;
 	let rightMove = source - 9;
@@ -642,7 +685,6 @@ function generatePossibleMoves(source, kings, color, allPieces) {
 	if(notRightCol & (BigInt.asUintN(64, 1n) << BigInt(source)) && !isOccupied(rightMove, allPieces) && moveInBoundary(source, rightMove)){
 		possibleMoves.push({ source, destination: rightMove, capture: [] });
 	}
-	return possibleMoves;
 }
 
 //make sure to check this again after every move for multi captures
@@ -837,3 +879,4 @@ function updateFromArray(){
 updateFromArray()
 //console.log(genMoves(redPieces, blackPieces, redKings, blackKings, 'r'))
 updateHTML()
+//console.log(genMoves(blackPieces, redPieces, blackKings, redKings, 'b'))
