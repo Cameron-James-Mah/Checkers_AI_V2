@@ -307,6 +307,7 @@ function reset(){
 	initTable()
 	clearHighlighted()
 	pdn = ''
+	moveNumber = 0
 }
 
 function downloadPDN(){
