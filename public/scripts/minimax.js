@@ -27,6 +27,7 @@ function minimaxHelper(){
 	let bestRedK = BigInt.asUintN(64, 0n)
 	let bestBlack = BigInt.asUintN(64, 0n)
 	let bestBlackK = BigInt.asUintN(64, 0n)
+	let bestMove = null
 	//console.log(moves)
 	for(let move of moves){
 		let newBlackP = blackPieces
@@ -64,7 +65,18 @@ function minimaxHelper(){
 			bestRedK = newRedK
 			bestBlack = newBlackP
 			bestBlackK = newBlackK
+			bestMove = move
 		}
+	}
+	document.getElementById(`${bestMove.source}`).style.backgroundColor = '#2B9F46'
+	document.getElementById(`${bestMove.destination}`).style.backgroundColor = '#2B9F46'
+	pdn += `${bestMove.source}-${bestMove.destination} `
+	moveNumber++
+	highlighted.push(bestMove.source)
+	highlighted.push(bestMove.destination)
+	for(let capture of bestMove.capture){
+		document.getElementById(`${capture}`).style.backgroundColor = '#D93E3E'
+		highlighted.push(capture)
 	}
 	console.log(`Eval: ${bestValue}`)
 	console.log(moves)
@@ -75,6 +87,7 @@ function minimaxHelper(){
 	blackKings = bestBlackK
 	playerTurn = true
 	followupPiece = -1
+	console.log(`PDN: ${pdn}`)
 	console.log(`Permuatations: ${perms}`)
 	if(genMoves(blackPieces, redPieces, blackKings, redKings, 'b').length == 0){ //ai won
 		console.log('ai won')
