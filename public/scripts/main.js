@@ -38,6 +38,9 @@ turns[1] = randomInt() //black turn hash
 let ZobristTable = new Array(64)
 const redTable = new Map() //zobrist key, {depth, alpha, beta, bestMove, } 
 const blackTable = new Map() //zobrist key, {depth, alpha, beta, bestMove, }
+let highlighted = []
+let pdn = ''
+let moveNumber = 1
 
 updateFromArray()
 //console.log(genMoves(redPieces, blackPieces, redKings, blackKings, 'r'))
@@ -206,7 +209,9 @@ function clickCell(e){
 	allPieces = blackPieces | redPieces | blackKings | redKings
 	allEnemy = redPieces | redKings
 	let temp = []
+	clearHighlighted()
 	checkPlayerJumps(id, allPieces, allEnemy, kingMove, temp) //checking for followup captures
+	pdn += `${moveNumber}. ${selectedPiece}-${id} `
 	if(madeCapture && temp.length > 0){ //has followup captures
 		followupPiece = id
 	}
@@ -287,4 +292,42 @@ function updateHTML(){
 		}
 	}
 	setEventListeners()
+}
+ 
+function clearHighlighted(){
+	for(let cell of highlighted){
+		document.getElementById(`${cell}`).style.backgroundColor = '#BA7A3A'
+	}
+	highlighted = []
+}
+
+function reset(){
+	updateFromArray()
+	updateHTML()
+	initTable()
+	clearHighlighted()
+	pdn = ''
+}
+
+function downloadPDN(){
+	saveTextAsFile(pdn, 'game.txt', 'text/plain')
+}
+
+function saveTextAsFile(textToWrite, fileNameToSaveAs, fileType) {
+    let textFileAsBlob = new Blob([textToWrite], { type: fileType });
+    let downloadLink = document.createElement('a');
+    downloadLink.download = fileNameToSaveAs;
+    downloadLink.innerHTML = 'Download File';
+
+    if (window.webkitURL != null) {
+        downloadLink.href = window.webkitURL.createObjectURL(
+            textFileAsBlob
+        );
+    } else {
+        downloadLink.href = window.URL.createObjectURL(textFileAsBlob);
+        downloadLink.style.display = 'none';
+        document.body.appendChild(downloadLink);
+    }
+
+    downloadLink.click();
 }

@@ -232,3 +232,45 @@ body {
 .depth {
   font-size: 15px;
 }
+
+/* Reset Button */
+#restartButton {
+  box-sizing: border-box;
+  height: 50px;
+  border: 1px solid dodgerblue;
+  margin: auto;
+  border-radius: 10px;
+  font-family: Verdana,
+    Geneva, Tahoma, sans-serif;
+
+  background-color: dodgerblue;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+#pdnButton {
+  box-sizing: border-box;
+  height: 50px;
+  border: 1px solid dodgerblue;
+  margin: auto;
+  border-radius: 10px;
+  font-family: Verdana,
+    Geneva, Tahoma, sans-serif;
+
+  background-color: dodgerblue;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+ul {
+  list-style: none;
+}
+
+li {
+  display: inline-block;
+  margin-right: 10px;
+  margin-bottom: 10px;
+  /* add spacing between items */
+}
